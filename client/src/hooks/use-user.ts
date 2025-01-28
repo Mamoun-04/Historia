@@ -62,7 +62,7 @@ export function useUser() {
   const { toast } = useToast();
 
   const { data: user, error, isLoading } = useQuery<SelectUser | null, Error>({
-    queryKey: ['user'],
+    queryKey: ['/api/user'],
     queryFn: fetchUser,
     staleTime: Infinity,
     retry: false
@@ -94,7 +94,7 @@ export function useUser() {
         });
       }
 
-      queryClient.setQueryData(['user'], data.user);
+      queryClient.setQueryData(['/api/user'], data.user);
     } catch (error) {
       console.error('Failed to update streak:', error);
     }
@@ -109,14 +109,14 @@ export function useUser() {
       return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
     },
   });
 
   const logoutMutation = useMutation<RequestResult, Error>({
     mutationFn: () => handleRequest('/api/logout', 'POST'),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
     },
   });
 
@@ -129,7 +129,7 @@ export function useUser() {
       return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
     },
   });
 

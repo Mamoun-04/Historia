@@ -37,7 +37,10 @@ export default function PremiumPage() {
         title: "Success!",
         description: "Your account has been upgraded to premium.",
       });
+      // Invalidate all necessary queries to refresh the UI
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/content"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"] });
       navigate("/");
     },
     onError: (error: Error) => {
@@ -67,7 +70,10 @@ export default function PremiumPage() {
         title: "Subscription Cancelled",
         description: "Your premium subscription has been cancelled.",
       });
+      // Invalidate all necessary queries to refresh the UI
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/content"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"] });
       navigate("/");
     },
     onError: (error: Error) => {

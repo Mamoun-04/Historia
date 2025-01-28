@@ -49,7 +49,10 @@ export default function ProfilePage() {
         title: "Subscription Cancelled",
         description: "Your premium subscription has been cancelled.",
       });
+      // Invalidate all necessary queries to refresh the UI
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/content"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"] });
     },
     onError: (error: Error) => {
       toast({
