@@ -2,7 +2,7 @@ import { type Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { db } from "@db";
-import { historicalContent, achievements } from "@db/schema";
+import { historicalContent, achievements, bookmarks } from "@db/schema";
 import { desc, eq } from "drizzle-orm";
 
 // Sample content for testing
@@ -68,6 +68,35 @@ export function registerRoutes(app: Express): Server {
     }
 
     res.json(content);
+  });
+
+  app.get("/api/bookmarks", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).send("Not authenticated");
+    }
+
+    const bookmarkedContent = await db
+      .select({
+        id: historicalContent.id,
+        title: historicalContent.title,
+        period: historicalContent.period,
+        category: historicalContent.category,
+        hook: historicalContent.hook,
+        content: historicalContent.content,
+        takeaway: historicalContent.takeaway,
+        imageUrl: historicalContent.imageUrl,
+        likes: historicalContent.likes,
+        createdAt: historicalContent.createdAt,
+      })
+      .from(bookmarks)
+      .innerJoin(
+        historicalContent,
+        eq(bookmarks.contentId, historicalContent.id)
+      )
+      .where(eq(bookmarks.userId, req.user.id))
+      .orderBy(desc(bookmarks.createdAt));
+
+    res.json(bookmarkedContent);
   });
 
   // Development endpoint to seed the database with sample content
