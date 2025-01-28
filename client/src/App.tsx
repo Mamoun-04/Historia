@@ -4,7 +4,8 @@ import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
 import { Button } from "@/components/ui/button";
 import { useUser } from "@/hooks/use-user";
-import { Loader2, User } from "lucide-react";
+import { useStreak } from "@/hooks/use-streak";
+import { Loader2, User, Flame } from "lucide-react";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import AuthPage from "@/pages/auth-page";
@@ -31,6 +32,10 @@ function Navbar() {
                   Profile
                 </Button>
               </Link>
+              <div className="flex items-center gap-2">
+                <Flame className="h-4 w-4 text-orange-500" />
+                <span className="text-sm font-medium">{user.streak || 0}</span>
+              </div>
               <span className="text-sm text-muted-foreground">
                 Welcome, {user.username}
               </span>
@@ -51,6 +56,7 @@ function Navbar() {
 
 function Router() {
   const { isLoading } = useUser();
+  useStreak(); // Add streak tracking
 
   if (isLoading) {
     return (

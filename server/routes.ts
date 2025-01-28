@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { db } from "@db";
 import { historicalContent, achievements, bookmarks, users } from "@db/schema";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, and, lt, gt } from "drizzle-orm";
 
 // Sample content for testing
 const sampleContent = [
@@ -166,6 +166,56 @@ export function registerRoutes(app: Express): Server {
       res.json({
         message: "Successfully cancelled premium subscription",
         user: updatedUser
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/streak/update", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).send("Not authenticated");
+    }
+
+    try {
+      const user = await db.query.users.findFirst({
+        where: eq(users.id, req.user.id),
+      });
+
+      if (!user) {
+        return res.status(404).send("User not found");
+      }
+
+      const lastLogin = new Date(user.lastLogin);
+      const now = new Date();
+      const timeDiff = now.getTime() - lastLogin.getTime();
+      const minuteDiff = Math.floor(timeDiff / 1000 / 60);
+
+      let streakLost = false;
+      let newStreak = user.streak;
+
+      // For demo purposes: if more than 1 minute has passed, reset streak
+      if (minuteDiff > 1) {
+        newStreak = 0;
+        streakLost = true;
+      } else {
+        // Increment streak
+        newStreak = user.streak + 1;
+      }
+
+      const [updatedUser] = await db
+        .update(users)
+        .set({ 
+          streak: newStreak,
+          lastLogin: now,
+        })
+        .where(eq(users.id, req.user.id))
+        .returning();
+
+      res.json({ 
+        user: updatedUser,
+        streakLost,
+        previousStreak: user.streak
       });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
