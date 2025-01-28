@@ -6,7 +6,7 @@ import type { SelectContent } from "@db/schema";
 
 export default function Home() {
   const { user } = useUser();
-  const { data: content, isLoading } = useQuery<SelectContent[]>({
+  const { data: content, isLoading, error } = useQuery<SelectContent[]>({
     queryKey: ["/api/content"],
   });
 
@@ -14,6 +14,14 @@ export default function Home() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto py-6 px-4">
+        <p className="text-red-500">Error loading content: {(error as Error).message}</p>
       </div>
     );
   }
@@ -30,6 +38,9 @@ export default function Home() {
           />
         ))}
       </div>
+      {(!content || content.length === 0) && (
+        <p className="text-center text-muted-foreground">No historical posts available.</p>
+      )}
     </div>
   );
 }

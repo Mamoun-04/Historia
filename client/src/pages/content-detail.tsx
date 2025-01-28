@@ -8,16 +8,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { ThumbsUp, Bookmark, MessageSquare, Clock, Loader2 } from "lucide-react";
 import { useUser } from "@/hooks/use-user";
 import { useContentActions } from "@/hooks/use-content-actions";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import type { SelectContent } from "@db/schema";
 
 export default function ContentDetail() {
   const [, params] = useRoute("/content/:id");
   const { user } = useUser();
   const contentId = params ? parseInt(params.id) : 0;
 
-  const { data: content } = useQuery({
+  const { data: content } = useQuery<SelectContent>({
     queryKey: ["/api/content", contentId],
   });
 
@@ -111,7 +112,7 @@ export default function ContentDetail() {
             <h3 className="text-lg font-semibold">Comments</h3>
             <p className="text-sm text-muted-foreground">
               <Clock className="h-4 w-4 inline mr-1" />
-              {format(new Date(content.createdAt), "PPP")}
+              {format(parseISO(content.createdAt.toString()), "PPP")}
             </p>
           </div>
 
@@ -151,7 +152,7 @@ export default function ContentDetail() {
                         <div className="flex justify-between items-start mb-2">
                           <p className="font-medium">{comment.username}</p>
                           <span className="text-sm text-muted-foreground">
-                            {format(new Date(comment.createdAt), "PPp")}
+                            {format(parseISO(comment.createdAt.toString()), "PPp")}
                           </span>
                         </div>
                         <p className="text-sm">{comment.text}</p>
