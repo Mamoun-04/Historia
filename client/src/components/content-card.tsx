@@ -1,25 +1,54 @@
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ThumbsUp, Bookmark, MessageSquare } from "lucide-react";
-import { Link } from "wouter";
+import { ThumbsUp, Bookmark, MessageSquare, Lock } from "lucide-react";
+import { Link, useLocation } from "wouter";
 import type { SelectContent } from "@db/schema";
+import { useUser } from "@/hooks/use-user";
+import { cn } from "@/lib/utils";
 
 interface ContentCardProps {
   content: SelectContent;
+  isPremiumLocked?: boolean;
 }
 
-export function ContentCard({ content }: ContentCardProps) {
+function PremiumOverlay() {
+  const [, navigate] = useLocation();
+
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+    <div className="absolute inset-0 backdrop-blur-md bg-background/50 flex flex-col items-center justify-center p-6 text-center gap-4">
+      <Lock className="h-8 w-8 text-primary" />
+      <h3 className="text-xl font-semibold">Premium Content</h3>
+      <p className="text-muted-foreground mb-4">
+        Sign up for Premium to unlock unlimited posts
+      </p>
+      <Button onClick={() => navigate("/auth?premium=true")}>
+        Upgrade to Premium
+      </Button>
+    </div>
+  );
+}
+
+export function ContentCard({ content, isPremiumLocked = false }: ContentCardProps) {
+  const { user } = useUser();
+  const isLocked = isPremiumLocked && !user?.premium;
+
+  return (
+    <Card className={cn(
+      "overflow-hidden hover:shadow-lg transition-shadow relative",
+      isLocked && "select-none"
+    )}>
       {content.imageUrl && (
         <img
           src={content.imageUrl}
           alt={content.title}
-          className="w-full h-48 object-cover"
+          className={cn(
+            "w-full h-48 object-cover",
+            isLocked && "filter blur-sm"
+          )}
         />
       )}
-      
-      <CardContent className="p-6">
+
+      <CardContent className={cn("p-6", isLocked && "filter blur-sm")}>
         <div className="mb-4">
           <div className="flex justify-between items-start mb-2">
             <h3 className="text-xl font-bold">{content.title}</h3>
@@ -37,7 +66,10 @@ export function ContentCard({ content }: ContentCardProps) {
         </Link>
       </CardContent>
 
-      <CardFooter className="px-6 py-4 bg-muted/50 flex justify-between">
+      <CardFooter className={cn(
+        "px-6 py-4 bg-muted/50 flex justify-between",
+        isLocked && "filter blur-sm"
+      )}>
         <div className="flex gap-4">
           <Button variant="ghost" size="sm">
             <ThumbsUp className="h-4 w-4 mr-1" />
@@ -52,6 +84,8 @@ export function ContentCard({ content }: ContentCardProps) {
           <Bookmark className="h-4 w-4" />
         </Button>
       </CardFooter>
+
+      {isLocked && <PremiumOverlay />}
     </Card>
   );
 }

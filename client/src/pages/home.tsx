@@ -32,11 +32,15 @@ export default function Home() {
           <TabsTrigger value="feed">Feed</TabsTrigger>
           {user && <TabsTrigger value="achievements">Achievements</TabsTrigger>}
         </TabsList>
-        
+
         <TabsContent value="feed" className="mt-6">
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {content?.map((item: any) => (
-              <ContentCard key={item.id} content={item} />
+            {content?.map((item: any, index: number) => (
+              <ContentCard 
+                key={item.id} 
+                content={item} 
+                isPremiumLocked={(index + 1) % 3 === 0}
+              />
             ))}
           </div>
         </TabsContent>
