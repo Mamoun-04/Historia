@@ -97,7 +97,7 @@ export function ContentCard({ content, isPremiumLocked = false }: ContentCardPro
         >
           <Bookmark className={cn(
             "h-4 w-4",
-            isBookmarked && "fill-foreground text-foreground"
+            isBookmarked && "fill-current text-foreground"
           )} />
         </Button>
       </CardFooter>

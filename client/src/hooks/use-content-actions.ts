@@ -70,6 +70,7 @@ export function useContentActions(contentId: number) {
     onSuccess: (_, isBookmarking) => {
       queryClient.invalidateQueries({ queryKey: ["/api/content", contentId, "bookmarked"] });
       queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/content"] });
       toast({
         title: isBookmarking ? "Bookmarked!" : "Bookmark Removed",
         description: isBookmarking 
