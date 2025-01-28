@@ -112,7 +112,7 @@ export default function ContentDetail() {
             <h3 className="text-lg font-semibold">Comments</h3>
             <p className="text-sm text-muted-foreground">
               <Clock className="h-4 w-4 inline mr-1" />
-              {format(parseISO(content.createdAt.toString()), "PPP")}
+              {content.createdAt && format(parseISO(content.createdAt.toString()), "PPP")}
             </p>
           </div>
 
