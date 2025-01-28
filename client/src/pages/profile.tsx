@@ -16,7 +16,12 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: bookmarks, isLoading: isLoadingBookmarks } = useQuery<SelectContent[]>({
+  interface BookmarkData {
+    content: SelectContent;
+    bookmarkedAt: string;
+  }
+
+  const { data: bookmarks, isLoading: isLoadingBookmarks } = useQuery<BookmarkData[]>({
     queryKey: ["/api/bookmarks"],
     enabled: !!user,
   });
@@ -104,10 +109,13 @@ export default function ProfilePage() {
 
         <TabsContent value="bookmarks" className="mt-6">
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {bookmarks?.map((content) => (
-              <ContentCard key={content.id} content={content} />
+            {bookmarks?.map((bookmark) => (
+              <ContentCard 
+                key={bookmark.content.id} 
+                content={bookmark.content}
+              />
             ))}
-            {bookmarks?.length === 0 && (
+            {(!bookmarks || bookmarks.length === 0) && (
               <p className="text-muted-foreground col-span-full text-center py-8">
                 No bookmarks yet. Start saving interesting historical content!
               </p>
@@ -121,7 +129,7 @@ export default function ProfilePage() {
               {achievements?.map((achievement) => (
                 <AchievementBadge key={achievement.id} achievement={achievement} />
               ))}
-              {achievements?.length === 0 && (
+              {(!achievements || achievements.length === 0) && (
                 <p className="text-muted-foreground col-span-full text-center py-8">
                   No achievements yet. Keep exploring to earn badges!
                 </p>
