@@ -23,12 +23,17 @@ export function useStreak() {
         }
 
         const data = await response.json();
-        
+
         if (data.streakLost) {
           toast({
             variant: "destructive",
             title: "Streak Lost!",
             description: `Oh no! You lost your ${data.previousStreak} day streak. Stay active to maintain your streak!`,
+          });
+        } else if (data.user.streak > (data.previousStreak || 0)) {
+          toast({
+            title: "Streak Increased! 🔥",
+            description: `Awesome! Your streak is now ${data.user.streak}! Keep it up!`,
           });
         }
 
@@ -38,10 +43,7 @@ export function useStreak() {
       }
     };
 
-    // Update streak immediately and then every minute
+    // Update streak only on login/component mount
     updateStreak();
-    const interval = setInterval(updateStreak, 60000);
-
-    return () => clearInterval(interval);
   }, [user, toast, queryClient]);
 }

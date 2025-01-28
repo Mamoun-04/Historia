@@ -178,9 +178,11 @@ export function registerRoutes(app: Express): Server {
     }
 
     try {
-      const user = await db.query.users.findFirst({
-        where: eq(users.id, req.user.id),
-      });
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, req.user.id))
+        .limit(1);
 
       if (!user) {
         return res.status(404).send("User not found");
@@ -192,15 +194,15 @@ export function registerRoutes(app: Express): Server {
       const minuteDiff = Math.floor(timeDiff / 1000 / 60);
 
       let streakLost = false;
-      let newStreak = user.streak;
+      let newStreak = user.streak || 0;
 
-      // For demo purposes: if more than 1 minute has passed, reset streak
+      // Reset streak if inactive for more than 1 minute
       if (minuteDiff > 1) {
-        newStreak = 0;
+        newStreak = 1; // Start new streak at 1
         streakLost = true;
       } else {
-        // Increment streak
-        newStreak = user.streak + 1;
+        // Increment streak only if last login was a while ago (avoid double counting within same minute)
+        newStreak = minuteDiff > 0 ? (user.streak || 0) + 1 : (user.streak || 0);
       }
 
       const [updatedUser] = await db
