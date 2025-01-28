@@ -20,12 +20,13 @@ export default function Home() {
 
   return (
     <div className="container mx-auto py-6 px-4">
+      <h1 className="text-3xl font-bold mb-6">Historical Posts</h1>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {content?.map((item, index) => (
           <ContentCard 
             key={item.id} 
-            content={item} 
-            isPremiumLocked={(index + 1) % 3 === 0}
+            content={item}
+            isPremiumLocked={user?.premium === false && (index + 1) % 3 === 0}
           />
         ))}
       </div>

@@ -116,7 +116,8 @@ export function registerRoutes(app: Express): Server {
     const content = await db
       .select()
       .from(historicalContent)
-      .orderBy(desc(historicalContent.createdAt));
+      .orderBy(desc(historicalContent.createdAt))
+      .limit(10);  // Remove limit if you want to show all posts
     res.json(content);
   });
 
@@ -166,14 +167,21 @@ export function registerRoutes(app: Express): Server {
   // Development endpoint to seed the database with sample content
   app.post("/api/seed-content", async (_req, res) => {
     try {
-      // Clear existing content
-      await db.delete(historicalContent);
+      // First, delete all existing content
+      await db.delete(historicalContent).execute();
 
-      // Insert sample content
-      await db.insert(historicalContent).values(sampleContent);
+      // Then insert the new sample content
+      const newContent = await db
+        .insert(historicalContent)
+        .values(sampleContent)
+        .returning();
 
-      res.json({ message: "Database seeded with sample content" });
+      res.json({ 
+        message: "Database seeded with sample content",
+        count: newContent.length
+      });
     } catch (error: any) {
+      console.error("Error seeding content:", error);
       res.status(500).json({ error: error.message });
     }
   });
