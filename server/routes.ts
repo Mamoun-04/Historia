@@ -167,19 +167,29 @@ export function registerRoutes(app: Express): Server {
   // Development endpoint to seed the database with sample content
   app.post("/api/seed-content", async (_req, res) => {
     try {
-      // First, delete all existing content
-      await db.delete(historicalContent).execute();
+      // Get existing content
+      const existingContent = await db
+        .select()
+        .from(historicalContent)
+        .execute();
 
-      // Then insert the new sample content
-      const newContent = await db
-        .insert(historicalContent)
-        .values(sampleContent)
-        .returning();
+      // Only seed if no content exists
+      if (existingContent.length === 0) {
+        const newContent = await db
+          .insert(historicalContent)
+          .values(sampleContent)
+          .returning();
 
-      res.json({ 
-        message: "Database seeded with sample content",
-        count: newContent.length
-      });
+        res.json({ 
+          message: "Database seeded with sample content",
+          count: newContent.length
+        });
+      } else {
+        res.json({ 
+          message: "Content already exists, skipping seed",
+          count: existingContent.length
+        });
+      }
     } catch (error: any) {
       console.error("Error seeding content:", error);
       res.status(500).json({ error: error.message });
