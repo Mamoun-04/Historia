@@ -13,7 +13,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
-const redis = new Redis("redis://redis:6379");
+const redis = new Redis("redis://redis-7:6379");
 
 // Content generation schemas and types
 const ContentSchema = z.object({
