@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { InsertUser, SelectUser } from "@db/schema";
+import { useToast } from "@/hooks/use-toast";
 
 type RequestResult = {
   ok: true;
@@ -58,6 +59,7 @@ async function fetchUser(): Promise<SelectUser | null> {
 
 export function useUser() {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const { data: user, error, isLoading } = useQuery<SelectUser | null, Error>({
     queryKey: ['user'],
@@ -66,8 +68,46 @@ export function useUser() {
     retry: false
   });
 
+  const handleStreakUpdate = async () => {
+    try {
+      const response = await fetch("/api/streak/update", {
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+
+      const data = await response.json();
+
+      if (data.streakLost) {
+        toast({
+          variant: "destructive",
+          title: "Streak Lost!",
+          description: `Oh no! You lost your ${data.previousStreak} day streak. Stay active to maintain your streak!`,
+        });
+      } else if (data.user.streak > (data.previousStreak || 0)) {
+        toast({
+          title: "🔥 Streak Increased!",
+          description: `Amazing! Your streak is now ${data.user.streak}! Keep learning history!`,
+        });
+      }
+
+      queryClient.setQueryData(['user'], data.user);
+    } catch (error) {
+      console.error('Failed to update streak:', error);
+    }
+  };
+
   const loginMutation = useMutation<RequestResult, Error, InsertUser>({
-    mutationFn: (userData) => handleRequest('/api/login', 'POST', userData),
+    mutationFn: async (userData) => {
+      const result = await handleRequest('/api/login', 'POST', userData);
+      if (result.ok) {
+        await handleStreakUpdate();
+      }
+      return result;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user'] });
     },
@@ -81,7 +121,13 @@ export function useUser() {
   });
 
   const registerMutation = useMutation<RequestResult, Error, InsertUser>({
-    mutationFn: (userData) => handleRequest('/api/register', 'POST', userData),
+    mutationFn: async (userData) => {
+      const result = await handleRequest('/api/register', 'POST', userData);
+      if (result.ok) {
+        await handleStreakUpdate();
+      }
+      return result;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user'] });
     },

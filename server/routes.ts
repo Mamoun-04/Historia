@@ -194,15 +194,16 @@ export function registerRoutes(app: Express): Server {
       const minuteDiff = Math.floor(timeDiff / 1000 / 60);
 
       let streakLost = false;
-      let newStreak = user.streak || 0;
+      let previousStreak = user.streak || 0;
+      let newStreak = previousStreak;
 
-      // Reset streak if inactive for more than 1 minute
+      // If more than 1 minute has passed since last login
       if (minuteDiff > 1) {
         newStreak = 1; // Start new streak at 1
-        streakLost = true;
-      } else {
-        // Increment streak only if last login was a while ago (avoid double counting within same minute)
-        newStreak = minuteDiff > 0 ? (user.streak || 0) + 1 : (user.streak || 0);
+        streakLost = previousStreak > 0; // Only mark as lost if they had a streak
+      } else if (minuteDiff > 0) {
+        // Only increment if some time has passed (avoid double counting)
+        newStreak = previousStreak + 1;
       }
 
       const [updatedUser] = await db
@@ -217,7 +218,7 @@ export function registerRoutes(app: Express): Server {
       res.json({ 
         user: updatedUser,
         streakLost,
-        previousStreak: user.streak
+        previousStreak
       });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
