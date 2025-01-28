@@ -2,7 +2,7 @@ import { type Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { db } from "@db";
-import { historicalContent, achievements, bookmarks, users } from "@db/schema";
+import { historicalContent, achievements, bookmarks, users, comments } from "@db/schema";
 import { desc, eq, and, lt, gt } from "drizzle-orm";
 
 // Sample content for testing
@@ -14,7 +14,8 @@ const sampleContent = [
     hook: "Did you know the Great Wall wasn't just one wall, but a series of fortifications?",
     content: "Built over multiple dynasties, the Great Wall stretches over 13,000 miles. While popular belief suggests it's visible from space, this is actually a myth that began in 1932.",
     takeaway: "The wall's true purpose wasn't just military defense—it regulated trade and immigration.",
-    imageUrl: "https://picsum.photos/seed/wall/800/400"
+    imageUrl: "https://picsum.photos/seed/wall/800/400",
+    likes: 0, // Added likes field
   },
   {
     title: "The Real Renaissance",
@@ -23,7 +24,8 @@ const sampleContent = [
     hook: "Leonardo da Vinci wrote his notes backward, requiring a mirror to read them!",
     content: "The Renaissance wasn't just an artistic movement—it was a complete transformation of European society. It marked the transition from medieval to modern times.",
     takeaway: "This period laid the foundation for modern scientific thinking.",
-    imageUrl: "https://picsum.photos/seed/renaissance/800/400"
+    imageUrl: "https://picsum.photos/seed/renaissance/800/400",
+    likes: 0, // Added likes field
   },
   {
     title: "Ancient Egyptian Dentistry",
@@ -32,7 +34,8 @@ const sampleContent = [
     hook: "The world's first known dental procedure was performed over 7,000 years ago in Egypt.",
     content: "Ancient Egyptians were pioneers in dental care, developing toothpaste from ox hooves, ashes, and burnt eggshells. They even had specialized dental tools.",
     takeaway: "Many modern dental practices have roots in ancient Egyptian medicine.",
-    imageUrl: "https://picsum.photos/seed/egypt/800/400"
+    imageUrl: "https://picsum.photos/seed/egypt/800/400",
+    likes: 0, // Added likes field
   },
   {
     title: "Viking Navigation Secrets",
@@ -41,7 +44,8 @@ const sampleContent = [
     hook: "Vikings used mysterious 'sunstones' to navigate on cloudy days!",
     content: "Recent research suggests Vikings may have used crystals called 'sunstones' to locate the sun in overcast conditions. This allowed them to navigate with remarkable accuracy.",
     takeaway: "Viking navigation technology was far more advanced than previously thought.",
-    imageUrl: "https://picsum.photos/seed/viking/800/400"
+    imageUrl: "https://picsum.photos/seed/viking/800/400",
+    likes: 0, // Added likes field
   }
 ];
 
@@ -220,6 +224,172 @@ export function registerRoutes(app: Express): Server {
         streakLost,
         previousStreak
       });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Like content
+  app.post("/api/content/:id/like", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).send("Not authenticated");
+    }
+
+    try {
+      const [content] = await db
+        .update(historicalContent)
+        .set({ 
+          likes: historicalContent.likes + 1 
+        })
+        .where(eq(historicalContent.id, Number(req.params.id)))
+        .returning();
+
+      res.json(content);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Unlike content
+  app.post("/api/content/:id/unlike", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).send("Not authenticated");
+    }
+
+    try {
+      const [content] = await db
+        .update(historicalContent)
+        .set({ 
+          likes: historicalContent.likes - 1 
+        })
+        .where(eq(historicalContent.id, Number(req.params.id)))
+        .returning();
+
+      res.json(content);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Bookmark content
+  app.post("/api/content/:id/bookmark", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).send("Not authenticated");
+    }
+
+    try {
+      // Check if bookmark already exists
+      const [existingBookmark] = await db
+        .select()
+        .from(bookmarks)
+        .where(
+          and(
+            eq(bookmarks.userId, req.user.id),
+            eq(bookmarks.contentId, Number(req.params.id))
+          )
+        )
+        .limit(1);
+
+      if (existingBookmark) {
+        return res.status(400).send("Content already bookmarked");
+      }
+
+      await db.insert(bookmarks).values({
+        userId: req.user.id,
+        contentId: Number(req.params.id),
+      });
+
+      res.json({ message: "Content bookmarked successfully" });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Remove bookmark
+  app.delete("/api/content/:id/bookmark", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).send("Not authenticated");
+    }
+
+    try {
+      await db
+        .delete(bookmarks)
+        .where(
+          and(
+            eq(bookmarks.userId, req.user.id),
+            eq(bookmarks.contentId, Number(req.params.id))
+          )
+        );
+
+      res.json({ message: "Bookmark removed successfully" });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Add comment
+  app.post("/api/content/:id/comment", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).send("Not authenticated");
+    }
+
+    try {
+      const [comment] = await db
+        .insert(comments)
+        .values({
+          userId: req.user.id,
+          contentId: Number(req.params.id),
+          text: req.body.text,
+        })
+        .returning();
+
+      res.json(comment);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get comments for content
+  app.get("/api/content/:id/comments", async (req, res) => {
+    try {
+      const contentComments = await db
+        .select({
+          id: comments.id,
+          text: comments.text,
+          createdAt: comments.createdAt,
+          username: users.username,
+          userId: users.id,
+        })
+        .from(comments)
+        .innerJoin(users, eq(comments.userId, users.id))
+        .where(eq(comments.contentId, Number(req.params.id)))
+        .orderBy(desc(comments.createdAt));
+
+      res.json(contentComments);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Check if user has bookmarked content
+  app.get("/api/content/:id/bookmarked", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).send("Not authenticated");
+    }
+
+    try {
+      const [bookmark] = await db
+        .select()
+        .from(bookmarks)
+        .where(
+          and(
+            eq(bookmarks.userId, req.user.id),
+            eq(bookmarks.contentId, Number(req.params.id))
+          )
+        )
+        .limit(1);
+
+      res.json({ bookmarked: !!bookmark });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
