@@ -4,6 +4,7 @@ import { ThumbsUp, Bookmark, MessageSquare, Lock } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import type { SelectContent } from "@db/schema";
 import { useUser } from "@/hooks/use-user";
+import { useContentActions } from "@/hooks/use-content-actions";
 import { cn } from "@/lib/utils";
 
 interface ContentCardProps {
@@ -31,6 +32,7 @@ function PremiumOverlay() {
 export function ContentCard({ content, isPremiumLocked = false }: ContentCardProps) {
   const { user } = useUser();
   const isLocked = isPremiumLocked && !user?.premium;
+  const { isBookmarked, like, bookmark, isLoading } = useContentActions(content.id);
 
   return (
     <Card className={cn(
@@ -71,17 +73,29 @@ export function ContentCard({ content, isPremiumLocked = false }: ContentCardPro
         isLocked && "filter blur-sm"
       )}>
         <div className="flex gap-4">
-          <Button variant="ghost" size="sm">
-            <ThumbsUp className="h-4 w-4 mr-1" />
-            <span className="text-sm">0</span>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => like(!content.likes)} 
+            disabled={isLoading.like || !user}
+          >
+            <ThumbsUp className={cn("h-4 w-4 mr-1", content.likes && "fill-current")} />
+            <span className="text-sm">{content.likes || 0}</span>
           </Button>
-          <Button variant="ghost" size="sm">
-            <MessageSquare className="h-4 w-4 mr-1" />
-            <span className="text-sm">0</span>
-          </Button>
+          <Link href={`/content/${content.id}#comments`}>
+            <Button variant="ghost" size="sm">
+              <MessageSquare className="h-4 w-4 mr-1" />
+              <span className="text-sm">0</span>
+            </Button>
+          </Link>
         </div>
-        <Button variant="ghost" size="sm">
-          <Bookmark className="h-4 w-4" />
+        <Button 
+          variant="ghost" 
+          size="sm"
+          onClick={() => bookmark(!isBookmarked)}
+          disabled={isLoading.bookmark || !user}
+        >
+          <Bookmark className={cn("h-4 w-4", isBookmarked && "fill-current")} />
         </Button>
       </CardFooter>
 

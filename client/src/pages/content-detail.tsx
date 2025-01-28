@@ -4,19 +4,43 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ThumbsUp, Bookmark, MessageSquare, Clock } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { ThumbsUp, Bookmark, MessageSquare, Clock, Loader2 } from "lucide-react";
 import { useUser } from "@/hooks/use-user";
+import { useContentActions } from "@/hooks/use-content-actions";
 import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import { useState } from "react";
 
 export default function ContentDetail() {
   const [, params] = useRoute("/content/:id");
   const { user } = useUser();
-  
+  const contentId = params ? parseInt(params.id) : 0;
+
   const { data: content } = useQuery({
-    queryKey: ["/api/content", params?.id],
+    queryKey: ["/api/content", contentId],
   });
 
+  const {
+    comments,
+    isLoadingComments,
+    isBookmarked,
+    like,
+    bookmark,
+    comment,
+    isLoading,
+  } = useContentActions(contentId);
+
+  const [commentText, setCommentText] = useState("");
+
   if (!content) return null;
+
+  const handleComment = async () => {
+    if (!commentText.trim()) return;
+
+    await comment(commentText);
+    setCommentText("");
+  };
 
   return (
     <div className="container mx-auto py-6 px-4">
@@ -28,14 +52,26 @@ export default function ContentDetail() {
               {content.period} · {content.category}
             </p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="icon">
-              <ThumbsUp className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="icon">
-              <Bookmark className="h-4 w-4" />
-            </Button>
-          </div>
+          {user && (
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="icon"
+                onClick={() => like(!content.likes)}
+                disabled={isLoading.like}
+              >
+                <ThumbsUp className={cn("h-4 w-4", content.likes && "fill-current")} />
+              </Button>
+              <Button 
+                variant="outline" 
+                size="icon"
+                onClick={() => bookmark(!isBookmarked)}
+                disabled={isLoading.bookmark}
+              >
+                <Bookmark className={cn("h-4 w-4", isBookmarked && "fill-current")} />
+              </Button>
+            </div>
+          )}
         </div>
 
         {content.imageUrl && (
@@ -78,14 +114,54 @@ export default function ContentDetail() {
 
           {user ? (
             <div className="space-y-4">
-              <textarea
-                className="w-full min-h-[100px] p-3 rounded-md border"
-                placeholder="Share your thoughts..."
-              />
-              <Button>
-                <MessageSquare className="h-4 w-4 mr-2" />
-                Comment
-              </Button>
+              <div className="flex gap-4">
+                <Textarea
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  placeholder="Share your thoughts..."
+                  className="flex-1"
+                />
+                <Button
+                  onClick={handleComment}
+                  disabled={isLoading.comment || !commentText.trim()}
+                >
+                  {isLoading.comment ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <MessageSquare className="h-4 w-4 mr-2" />
+                      Comment
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              <ScrollArea className="h-[400px] rounded-md border p-4">
+                {isLoadingComments ? (
+                  <div className="flex justify-center py-4">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {comments.map((comment) => (
+                      <div key={comment.id} className="p-4 rounded-lg bg-muted">
+                        <div className="flex justify-between items-start mb-2">
+                          <p className="font-medium">{comment.username}</p>
+                          <span className="text-sm text-muted-foreground">
+                            {format(new Date(comment.createdAt), "PPp")}
+                          </span>
+                        </div>
+                        <p className="text-sm">{comment.text}</p>
+                      </div>
+                    ))}
+                    {comments.length === 0 && (
+                      <p className="text-center text-muted-foreground py-4">
+                        No comments yet. Be the first to comment!
+                      </p>
+                    )}
+                  </div>
+                )}
+              </ScrollArea>
             </div>
           ) : (
             <p className="text-muted-foreground">
