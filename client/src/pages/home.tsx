@@ -5,14 +5,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AchievementBadge } from "@/components/achievement-badge";
 import { Loader2 } from "lucide-react";
+import type { SelectContent, SelectAchievement } from "@db/schema";
 
 export default function Home() {
   const { user } = useUser();
-  const { data: content, isLoading } = useQuery({
+  const { data: content, isLoading } = useQuery<SelectContent[]>({
     queryKey: ["/api/content"],
   });
 
-  const { data: achievements } = useQuery({
+  const { data: achievements } = useQuery<SelectAchievement[]>({
     queryKey: ["/api/achievements"],
     enabled: !!user,
   });
@@ -35,7 +36,7 @@ export default function Home() {
 
         <TabsContent value="feed" className="mt-6">
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {content?.map((item: any, index: number) => (
+            {content?.map((item, index) => (
               <ContentCard 
                 key={item.id} 
                 content={item} 
@@ -49,7 +50,7 @@ export default function Home() {
           <TabsContent value="achievements" className="mt-6">
             <ScrollArea className="h-[500px] rounded-md border p-4">
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {achievements?.map((achievement: any) => (
+                {achievements?.map((achievement) => (
                   <AchievementBadge 
                     key={achievement.id} 
                     achievement={achievement} 
