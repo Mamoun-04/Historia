@@ -1,7 +1,7 @@
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ThumbsUp, Bookmark, MessageSquare, Lock } from "lucide-react";
-import { Link, useLocation } from "wouter";
+import { Link } from "wouter";
 import type { SelectContent } from "@db/schema";
 import { useUser } from "@/hooks/use-user";
 import { useContentActions } from "@/hooks/use-content-actions";
@@ -13,8 +13,6 @@ interface ContentCardProps {
 }
 
 function PremiumOverlay() {
-  const [, navigate] = useLocation();
-
   return (
     <div className="absolute inset-0 backdrop-blur-md bg-background/50 flex flex-col items-center justify-center p-6 text-center gap-4">
       <Lock className="h-8 w-8 text-primary" />
@@ -22,9 +20,9 @@ function PremiumOverlay() {
       <p className="text-muted-foreground mb-4">
         Sign up for Premium to unlock unlimited posts
       </p>
-      <Button onClick={() => navigate("/premium")}>
-        Upgrade to Premium
-      </Button>
+      <Link href="/premium">
+        <Button>Upgrade to Premium</Button>
+      </Link>
     </div>
   );
 }
@@ -62,7 +60,7 @@ export function ContentCard({ content, isPremiumLocked = false }: ContentCardPro
         <p className="mb-4 line-clamp-3">{content.hook}</p>
 
         <Link href={`/content/${content.id}`}>
-          <Button variant="secondary" className="w-full">
+          <Button variant="secondary" className="w-full" disabled={isLocked}>
             Read More
           </Button>
         </Link>
@@ -97,7 +95,7 @@ export function ContentCard({ content, isPremiumLocked = false }: ContentCardPro
         >
           <Bookmark className={cn(
             "h-4 w-4",
-            isBookmarked && "fill-black stroke-black"
+            isBookmarked && "fill-current"
           )} />
         </Button>
       </CardFooter>

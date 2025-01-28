@@ -138,25 +138,68 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Get single content item
+  // Get single content item with relations
   app.get("/api/content/:id", async (req, res) => {
     try {
+      const contentId = parseInt(req.params.id);
+      if (isNaN(contentId)) {
+        return res.status(400).json({ error: "Invalid content ID" });
+      }
+
+      // Fetch content
       const [content] = await db
         .select()
         .from(historicalContent)
-        .where(eq(historicalContent.id, parseInt(req.params.id)))
+        .where(eq(historicalContent.id, contentId))
         .limit(1);
 
       if (!content) {
         return res.status(404).json({ error: "Content not found" });
       }
 
-      res.json(content);
+      // Fetch comments if user is authenticated
+      let contentComments = [];
+      if (req.user) {
+        contentComments = await db
+          .select({
+            id: comments.id,
+            text: comments.text,
+            createdAt: comments.createdAt,
+            username: users.username,
+          })
+          .from(comments)
+          .innerJoin(users, eq(users.id, comments.userId))
+          .where(eq(comments.contentId, contentId))
+          .orderBy(desc(comments.createdAt));
+      }
+
+      // Check if user has bookmarked this content
+      let isBookmarked = false;
+      if (req.user) {
+        const [bookmark] = await db
+          .select()
+          .from(bookmarks)
+          .where(
+            and(
+              eq(bookmarks.userId, req.user.id),
+              eq(bookmarks.contentId, contentId)
+            )
+          )
+          .limit(1);
+        isBookmarked = !!bookmark;
+      }
+
+      res.json({
+        ...content,
+        comments: contentComments,
+        isBookmarked
+      });
     } catch (error: any) {
       console.error("Error fetching content:", error);
       res.status(500).json({ error: error.message });
     }
   });
+
   // Seed database with initial content
   app.post("/api/seed-content", async (_req, res) => {
     try {
@@ -210,38 +253,48 @@ export function registerRoutes(app: Express): Server {
 
   // Bookmark content
   app.post("/api/content/:id/bookmark", async (req, res) => {
-    if (!req.user) {
+    if (!req.user?.id) {
       return res.status(401).send("Not authenticated");
     }
 
     try {
+      const contentId = parseInt(req.params.id);
+      if (isNaN(contentId)) {
+        return res.status(400).json({ error: "Invalid content ID" });
+      }
+
       const [exists] = await db
         .select()
         .from(bookmarks)
-        .where(and(
-          eq(bookmarks.userId, req.user.id),
-          eq(bookmarks.contentId, parseInt(req.params.id))
-        ))
+        .where(
+          and(
+            eq(bookmarks.userId, req.user.id),
+            eq(bookmarks.contentId, contentId)
+          )
+        )
         .limit(1);
 
       if (exists) {
         await db
           .delete(bookmarks)
-          .where(and(
-            eq(bookmarks.userId, req.user.id),
-            eq(bookmarks.contentId, parseInt(req.params.id))
-          ));
+          .where(
+            and(
+              eq(bookmarks.userId, req.user.id),
+              eq(bookmarks.contentId, contentId)
+            )
+          );
         res.json({ bookmarked: false });
       } else {
         await db
           .insert(bookmarks)
           .values({
             userId: req.user.id,
-            contentId: parseInt(req.params.id)
+            contentId: contentId,
           });
         res.json({ bookmarked: true });
       }
     } catch (error: any) {
+      console.error("Error toggling bookmark:", error);
       res.status(500).json({ error: error.message });
     }
   });
