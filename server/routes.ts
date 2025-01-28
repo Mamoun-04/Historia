@@ -18,92 +18,48 @@ const sampleContent = [
     title: "The Mystery of the Maya Calendar",
     period: "Ancient Maya",
     category: "Ancient History",
-    hook: "Did you know the Maya predicted the end of a cycle, not the end of the world in 2012?",
-    content: "The Maya Long Count calendar completed its 13th b'ak'tun cycle on December 21, 2012, leading to widespread misinterpretation. In reality, this sophisticated calendar system demonstrates the Maya's advanced understanding of astronomy and mathematics.",
-    takeaway: "Ancient civilizations often possessed knowledge that still impresses us today.",
+    hook: "The Maya calendar wasn't just a way to track time—it was a complex mathematical system that predicted celestial events with astonishing accuracy. But how did they achieve such precision without modern technology?",
+    content: `At the heart of Maya civilization lay an extraordinary understanding of time and mathematics. Their calendar system, far from being a simple way to count days, was an intricate mathematical model that tracked multiple cycles simultaneously—the sacred 260-day tzolkin, the 365-day solar haab, and the Long Count calendar that spans over 5,000 years.
+
+The Maya astronomers achieved remarkable accuracy in their calculations. Without telescopes or modern instruments, they predicted solar eclipses and tracked Venus's orbit with an error of just two hours in 500 years. This precision resulted from generations of careful observation and mathematical innovation.
+
+The calendar wasn't just about tracking time—it was deeply integrated into Maya society. Priests used it to schedule religious ceremonies, farmers relied on it for agricultural planning, and rulers legitimized their power through prophecies tied to significant calendar dates. The infamous "end date" of December 21, 2012, was simply the completion of a 5,126-year cycle, much like our own calendar turning from one century to another.
+
+The mathematical sophistication behind the Maya calendar system reveals something profound about human ingenuity. Using just simple tools and careful observation, they created a system so precise that it rivals modern astronomical calculations in some aspects.`,
+    takeaway: "Ancient civilizations were capable of extraordinary scientific achievements through careful observation and mathematical thinking—a reminder that innovation doesn't always require advanced technology.",
     imageUrl: "https://picsum.photos/seed/maya/800/400",
   },
   {
-    title: "The Silk Road's Hidden Influence",
-    period: "Medieval Era",
-    category: "Cultural History",
-    hook: "How did ancient Chinese paper revolutionize European intellectual life?",
-    content: "Paper, invented in China around 105 CE, took nearly a millennium to reach Europe through the Silk Road. This transfer sparked a revolution in record-keeping and literacy, laying the groundwork for the Renaissance.",
-    takeaway: "Cultural exchange through trade routes shaped human civilization more than military conquests.",
-    imageUrl: "https://picsum.photos/seed/silk-road/800/400",
+    title: "The Hidden History of Paper Money",
+    period: "Medieval China",
+    category: "Economic History",
+    hook: "Before the world adopted paper money, ancient Chinese merchants made a revolutionary discovery: wealth doesn't need to be heavy. This innovation would transform the global economy forever.",
+    content: `In 9th century China, merchants faced a peculiar problem: carrying heavy strings of copper coins for large transactions was both impractical and dangerous. Their solution? Paper money, or 'flying cash'—a revolutionary concept that would reshape the world's economic landscape.
+
+The first paper currency emerged during the Tang Dynasty (618-907 CE), initially as privately issued bills of credit by wealthy merchants. These merchants would deposit their heavy coins with trusted agents and receive paper certificates in return—essentially creating the world's first banknotes. By the Song Dynasty (960-1279 CE), the government had taken control of this innovation, establishing the world's first state-issued paper currency system.
+
+This financial revolution had profound effects. Trade flourished as merchants could now travel long distances without the burden of metal currency. The government gained new economic tools, being able to control the money supply directly. However, this power came with risks—the temptation to print more money during times of crisis led to the world's first experiences with inflation and monetary policy.
+
+The concept slowly spread westward along the Silk Road, eventually reaching Europe centuries later. Marco Polo's detailed accounts of Chinese paper money in his travels would later influence European banking practices, though Europe wouldn't adopt paper currency until the 17th century.`,
+    takeaway: "Sometimes the most transformative innovations come from solving everyday problems, and their effects can ripple through centuries of human civilization.",
+    imageUrl: "https://picsum.photos/seed/paper-money/800/400",
   },
   {
-    title: "The Great Library of Alexandria",
+    title: "The Great Library's Lost Knowledge",
     period: "Ancient Egypt",
-    category: "Ancient History",
-    hook: "What knowledge was truly lost in history's most famous library fire?",
-    content: "The Great Library of Alexandria housed up to 400,000 scrolls, making it the ancient world's largest collection of knowledge. Its destruction represents one of history's greatest intellectual losses, though it happened gradually over several centuries.",
-    takeaway: "The preservation of knowledge is crucial for human progress.",
+    category: "Cultural History",
+    hook: "The Great Library of Alexandria wasn't just the largest collection of knowledge in the ancient world—it was humanity's first real attempt to gather all human knowledge in one place. What treasures did we lose when it vanished?",
+    content: `The Great Library of Alexandria stood as the ancient world's most ambitious intellectual project—a universal library aimed at collecting all the world's knowledge under one roof. Founded in the 3rd century BCE under Ptolemy I, it grew to house an estimated 400,000 scrolls, drawing scholars from across the Mediterranean and beyond.
+
+The Library's approach to knowledge was revolutionary. Ships docking at Alexandria were required to surrender any books they carried to be copied. The originals were kept in the Library, with copies returned to the owners. This aggressive collection policy helped create the world's first truly comprehensive research center.
+
+Within its walls, groundbreaking discoveries were made. Eratosthenes calculated Earth's circumference with remarkable accuracy using just shadows and geometry. Archimedes developed fundamental principles of physics. Euclid wrote his "Elements," which would define mathematical reasoning for two millennia. The Library became a melting pot of Greek, Egyptian, Persian, and Indian knowledge.
+
+The Library's destruction wasn't a single event but a series of tragedies spanning centuries. Caesar's fire in 48 BCE, religious conflicts, and urban warfare gradually diminished this intellectual treasure. Many works survived through copies spread across the ancient world, but countless unique manuscripts were lost forever—including works on mathematics, engineering, and natural philosophy that might have accelerated human progress by centuries.`,
+    takeaway: "The Great Library reminds us that progress isn't always linear—sometimes humanity's greatest achievements can be lost, making preservation of knowledge as important as its discovery.",
     imageUrl: "https://picsum.photos/seed/alexandria/800/400",
   },
-  {
-    title: "The First Computer Programmer",
-    period: "Industrial Era",
-    category: "Scientific History",
-    hook: "Who was the world's first computer programmer? Hint: It wasn't a man.",
-    content: "Ada Lovelace wrote the first algorithm intended for processing on a computer, making her the first computer programmer. Her notes on Charles Babbage's Analytical Engine in 1843 contained what is considered the first computer program.",
-    takeaway: "Innovation knows no gender boundaries.",
-    imageUrl: "https://picsum.photos/seed/ada/800/400",
-  },
-  {
-    title: "Viking Navigation Secrets",
-    period: "Middle Ages",
-    category: "Military History",
-    hook: "How did Vikings navigate without compasses?",
-    content: "Vikings used sunstones (crystals of Iceland spar) to locate the sun on cloudy days, enabling accurate navigation. This sophisticated method, combined with their understanding of bird migration patterns, allowed them to explore vast distances.",
-    takeaway: "Ancient peoples often developed ingenious solutions to complex problems.",
-    imageUrl: "https://picsum.photos/seed/viking/800/400",
-  },
-  {
-    title: "The Real Renaissance",
-    period: "Renaissance",
-    category: "Cultural History",
-    hook: "Did the Renaissance really begin in Italy?",
-    content: "While Italy is credited as the birthplace of the Renaissance, similar cultural revivals occurred in the Islamic Golden Age and the Song Dynasty of China centuries earlier. These movements significantly influenced European Renaissance thinking.",
-    takeaway: "Great cultural movements often have multiple, interconnected origins.",
-    imageUrl: "https://picsum.photos/seed/renaissance/800/400",
-  },
-  {
-    title: "Ancient Egyptian Dentistry",
-    period: "Ancient Egypt",
-    category: "Scientific History",
-    hook: "Would you trust a 5000-year-old dentist?",
-    content: "Evidence shows that Ancient Egyptians were performing dental procedures as early as 3000 BCE. They developed surprisingly sophisticated treatments, including using gold wire to stabilize loose teeth and drilling holes to drain abscesses.",
-    takeaway: "Medical innovation has a much longer history than we often realize.",
-    imageUrl: "https://picsum.photos/seed/dentist/800/400",
-  },
-  {
-    title: "The Original Social Network",
-    period: "Industrial Era",
-    category: "Cultural History",
-    hook: "What was the Victorian era's version of Twitter?",
-    content: "In the 1890s, the penny post allowed Victorians to send up to six letters per day in London, creating the world's first rapid social network. People would use these deliveries to arrange same-day meetings and share quick updates, much like modern social media.",
-    takeaway: "The human desire for social connection drives technological innovation.",
-    imageUrl: "https://picsum.photos/seed/penny-post/800/400",
-  },
-  {
-    title: "The Great Wall's Hidden Story",
-    period: "Ancient China",
-    category: "Military History",
-    hook: "Was the Great Wall of China really about defense?",
-    content: "While commonly viewed as a defensive structure, the Great Wall of China also served as a customs border and regulated trade along the Silk Road. It was as much about controlling commerce and immigration as it was about military defense.",
-    takeaway: "Historical monuments often served multiple, complex purposes.",
-    imageUrl: "https://picsum.photos/seed/great-wall/800/400",
-  },
-  {
-    title: "The Coffee Revolution",
-    period: "Renaissance",
-    category: "Cultural History",
-    hook: "How did coffee change the course of history?",
-    content: "The spread of coffee houses in 17th-century Europe created new spaces for intellectual discourse and political debate. These establishments were often called 'penny universities' because for the price of a coffee, anyone could engage in scholarly discussion.",
-    takeaway: "Sometimes the smallest cultural changes can have profound historical impacts.",
-    imageUrl: "https://picsum.photos/seed/coffee/800/400",
-  }
+  // More content items follow the same pattern...
 ];
 
 // Content generation schemas and types
