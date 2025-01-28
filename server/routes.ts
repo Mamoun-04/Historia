@@ -16,7 +16,16 @@ const openai = new OpenAI({
 const redis = new Redis({
   host: "0.0.0.0",
   port: 6379,
-  maxRetriesPerRequest: 3
+  maxRetriesPerRequest: 3,
+  retryStrategy: (times) => {
+    const delay = Math.min(times * 50, 2000);
+    return delay;
+  },
+  enableReadyCheck: true
+});
+
+redis.on('error', (err) => {
+  console.log('Redis connection error:', err.message);
 });
 
 // Content generation schemas and types
