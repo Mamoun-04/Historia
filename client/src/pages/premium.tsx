@@ -10,13 +10,14 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Lock, CheckCircle2 } from "lucide-react";
 
 export default function PremiumPage() {
   const { user } = useUser();
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const upgradeMutation = useMutation({
     mutationFn: async () => {
@@ -36,6 +37,37 @@ export default function PremiumPage() {
         title: "Success!",
         description: "Your account has been upgraded to premium.",
       });
+      queryClient.invalidateQueries({ queryKey: ["user"] });
+      navigate("/");
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
+    },
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch("/api/premium/cancel", {
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Subscription Cancelled",
+        description: "Your premium subscription has been cancelled.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["user"] });
       navigate("/");
     },
     onError: (error: Error) => {
@@ -59,15 +91,32 @@ export default function PremiumPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CheckCircle2 className="h-6 w-6 text-primary" />
-              Already Premium
+              Premium Member
             </CardTitle>
             <CardDescription>
-              You already have access to all premium features!
+              You currently have access to all premium features!
             </CardDescription>
           </CardHeader>
-          <CardFooter>
-            <Button onClick={() => navigate("/")} className="w-full">
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              Cancel your subscription at any time. You'll still have access until the end of your current billing period.
+            </p>
+          </CardContent>
+          <CardFooter className="flex flex-col gap-4">
+            <Button 
+              onClick={() => navigate("/")} 
+              variant="secondary" 
+              className="w-full"
+            >
               Return to Home
+            </Button>
+            <Button 
+              onClick={() => cancelMutation.mutate()} 
+              variant="destructive"
+              className="w-full"
+              disabled={cancelMutation.isPending}
+            >
+              {cancelMutation.isPending ? "Cancelling..." : "Cancel Subscription"}
             </Button>
           </CardFooter>
         </Card>

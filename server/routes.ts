@@ -133,13 +133,40 @@ export function registerRoutes(app: Express): Server {
 
     try {
       // Update user's premium status in the database
-      await db
+      const [updatedUser] = await db
         .update(users)
         .set({ premium: true })
-        .where(eq(users.id, req.user.id));
+        .where(eq(users.id, req.user.id))
+        .returning();
 
       // Return success
-      res.json({ message: "Successfully upgraded to premium" });
+      res.json({
+        message: "Successfully upgraded to premium",
+        user: updatedUser
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/premium/cancel", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).send("Not authenticated");
+    }
+
+    try {
+      // Update user's premium status in the database
+      const [updatedUser] = await db
+        .update(users)
+        .set({ premium: false })
+        .where(eq(users.id, req.user.id))
+        .returning();
+
+      // Return success
+      res.json({
+        message: "Successfully cancelled premium subscription",
+        user: updatedUser
+      });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
