@@ -138,6 +138,25 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Get single content item
+  app.get("/api/content/:id", async (req, res) => {
+    try {
+      const [content] = await db
+        .select()
+        .from(historicalContent)
+        .where(eq(historicalContent.id, parseInt(req.params.id)))
+        .limit(1);
+
+      if (!content) {
+        return res.status(404).json({ error: "Content not found" });
+      }
+
+      res.json(content);
+    } catch (error: any) {
+      console.error("Error fetching content:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
   // Seed database with initial content
   app.post("/api/seed-content", async (_req, res) => {
     try {
