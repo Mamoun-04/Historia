@@ -16,7 +16,7 @@ function PremiumOverlay() {
   return (
     <div className="absolute inset-0 backdrop-blur-md bg-background/50 flex flex-col items-center justify-center p-6 text-center gap-4">
       <Lock className="h-8 w-8 text-primary" />
-      <h3 className="text-xl font-semibold">Premium Content</h3>
+      <h3 className="text-2xl font-semibold">Premium Content</h3>
       <p className="text-muted-foreground mb-4">
         Sign up for Premium to unlock unlimited posts
       </p>

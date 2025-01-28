@@ -33,7 +33,7 @@ export default function ProfilePage() {
 
   const cancelMutation = useMutation({
     mutationFn: async () => {
-      const response = await fetch("/api/premium/cancel", {
+      const response = await fetch("/api/user/cancel-premium", {
         method: "POST",
         credentials: "include",
       });
@@ -49,7 +49,7 @@ export default function ProfilePage() {
         title: "Subscription Cancelled",
         description: "Your premium subscription has been cancelled.",
       });
-      queryClient.invalidateQueries({ queryKey: ["user"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
     },
     onError: (error: Error) => {
       toast({
