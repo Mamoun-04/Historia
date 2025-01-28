@@ -72,12 +72,9 @@ export function useContentActions(contentId: number) {
       queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"] });
       queryClient.invalidateQueries({ queryKey: ["/api/content"] });
 
-      // Check if bookmark was added or removed based on the response message
-      const isAdding = data.message === "Content bookmarked successfully";
-
       toast({
-        title: isAdding ? "Bookmarked!" : "Bookmark Removed",
-        description: isAdding 
+        title: data.bookmarked ? "Bookmarked!" : "Bookmark Removed",
+        description: data.bookmarked 
           ? "Content added to your bookmarks"
           : "Content removed from your bookmarks",
       });
