@@ -68,7 +68,10 @@ export default function ContentDetail() {
                 onClick={() => bookmark(!isBookmarked)}
                 disabled={isLoading.bookmark}
               >
-                <Bookmark className={cn("h-4 w-4", isBookmarked && "fill-current")} />
+                <Bookmark className={cn(
+                  "h-4 w-4",
+                  isBookmarked && "fill-foreground text-foreground"
+                )} />
               </Button>
             </div>
           )}
