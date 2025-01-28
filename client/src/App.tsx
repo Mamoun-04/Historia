@@ -16,8 +16,8 @@ function Navbar() {
   return (
     <nav className="border-b">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <Link href="/">
-          <a className="text-2xl font-bold">History Bits</a>
+        <Link href="/" className="text-2xl font-bold">
+          History Bits
         </Link>
 
         <div className="flex items-center gap-4">
