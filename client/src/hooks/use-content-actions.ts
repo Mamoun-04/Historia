@@ -55,9 +55,9 @@ export function useContentActions(contentId: number) {
 
   // Bookmark mutation
   const bookmarkMutation = useMutation({
-    mutationFn: async (isBookmarking: boolean) => {
+    mutationFn: async () => {
       const response = await fetch(`/api/content/${contentId}/bookmark`, {
-        method: "POST",  // Always use POST since our endpoint now handles both bookmark/unbookmark
+        method: "POST",
         credentials: "include",
       });
 
@@ -67,13 +67,17 @@ export function useContentActions(contentId: number) {
 
       return response.json();
     },
-    onSuccess: (_, isBookmarking) => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/content", contentId, "bookmarked"] });
       queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"] });
       queryClient.invalidateQueries({ queryKey: ["/api/content"] });
+
+      // Check if bookmark was added or removed based on the response message
+      const isAdding = data.message === "Content bookmarked successfully";
+
       toast({
-        title: isBookmarking ? "Bookmarked!" : "Bookmark Removed",
-        description: isBookmarking 
+        title: isAdding ? "Bookmarked!" : "Bookmark Removed",
+        description: isAdding 
           ? "Content added to your bookmarks"
           : "Content removed from your bookmarks",
       });
@@ -126,7 +130,7 @@ export function useContentActions(contentId: number) {
     isLoadingComments,
     isBookmarked: bookmarkStatus?.bookmarked || false,
     like: (isLiking: boolean) => likeMutation.mutate(isLiking),
-    bookmark: (isBookmarking: boolean) => bookmarkMutation.mutate(isBookmarking),
+    bookmark: () => bookmarkMutation.mutate(),
     comment: (text: string) => commentMutation.mutate(text),
     isLoading: {
       like: likeMutation.isPending,
