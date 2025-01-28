@@ -13,7 +13,11 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
-const redis = new Redis("redis://redis-7:6379");
+const redis = new Redis({
+  host: "0.0.0.0",
+  port: 6379,
+  maxRetriesPerRequest: 3
+});
 
 // Content generation schemas and types
 const ContentSchema = z.object({
