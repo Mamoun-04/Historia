@@ -371,6 +371,48 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Premium user upgrade endpoint
+  app.post("/api/user/upgrade", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).send("Not authenticated");
+    }
+
+    try {
+      // Update user's premium status
+      const [updatedUser] = await db
+        .update(users)
+        .set({ premium: true })
+        .where(eq(users.id, req.user.id))
+        .returning();
+
+      res.json(updatedUser);
+    } catch (error: any) {
+      console.error("Error upgrading user:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Cancel premium subscription endpoint
+  app.post("/api/user/cancel-premium", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).send("Not authenticated");
+    }
+
+    try {
+      // Update user's premium status
+      const [updatedUser] = await db
+        .update(users)
+        .set({ premium: false })
+        .where(eq(users.id, req.user.id))
+        .returning();
+
+      res.json(updatedUser);
+    } catch (error: any) {
+      console.error("Error canceling premium:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

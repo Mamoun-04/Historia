@@ -21,7 +21,7 @@ export default function PremiumPage() {
 
   const upgradeMutation = useMutation({
     mutationFn: async () => {
-      const response = await fetch("/api/premium/upgrade", {
+      const response = await fetch("/api/user/upgrade", {
         method: "POST",
         credentials: "include",
       });
@@ -37,7 +37,7 @@ export default function PremiumPage() {
         title: "Success!",
         description: "Your account has been upgraded to premium.",
       });
-      queryClient.invalidateQueries({ queryKey: ["user"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       navigate("/");
     },
     onError: (error: Error) => {
@@ -51,7 +51,7 @@ export default function PremiumPage() {
 
   const cancelMutation = useMutation({
     mutationFn: async () => {
-      const response = await fetch("/api/premium/cancel", {
+      const response = await fetch("/api/user/cancel-premium", {
         method: "POST",
         credentials: "include",
       });
@@ -67,7 +67,7 @@ export default function PremiumPage() {
         title: "Subscription Cancelled",
         description: "Your premium subscription has been cancelled.",
       });
-      queryClient.invalidateQueries({ queryKey: ["user"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       navigate("/");
     },
     onError: (error: Error) => {
