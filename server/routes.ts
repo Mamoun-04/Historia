@@ -2,7 +2,7 @@ import { type Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { db } from "@db";
-import { historicalContent, achievements, bookmarks } from "@db/schema";
+import { historicalContent, achievements, bookmarks, users } from "@db/schema";
 import { desc, eq } from "drizzle-orm";
 
 // Sample content for testing
@@ -124,6 +124,25 @@ export function registerRoutes(app: Express): Server {
       .from(achievements);
 
     res.json(userAchievements);
+  });
+
+  app.post("/api/premium/upgrade", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).send("Not authenticated");
+    }
+
+    try {
+      // Update user's premium status in the database
+      await db
+        .update(users)
+        .set({ premium: true })
+        .where(eq(users.id, req.user.id));
+
+      // Return success
+      res.json({ message: "Successfully upgraded to premium" });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
   });
 
   const httpServer = createServer(app);

@@ -21,7 +21,7 @@ function PremiumOverlay() {
       <p className="text-muted-foreground mb-4">
         Sign up for Premium to unlock unlimited posts
       </p>
-      <Button onClick={() => navigate("/auth?premium=true")}>
+      <Button onClick={() => navigate("/premium")}>
         Upgrade to Premium
       </Button>
     </div>

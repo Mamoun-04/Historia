@@ -10,6 +10,7 @@ import Home from "@/pages/home";
 import AuthPage from "@/pages/auth-page";
 import ContentDetail from "@/pages/content-detail";
 import ProfilePage from "@/pages/profile";
+import PremiumPage from "@/pages/premium";
 
 function Navbar() {
   const { user, logout } = useUser();
@@ -67,6 +68,7 @@ function Router() {
         <Route path="/auth" component={AuthPage} />
         <Route path="/profile" component={ProfilePage} />
         <Route path="/content/:id" component={ContentDetail} />
+        <Route path="/premium" component={PremiumPage} />
         <Route component={NotFound} />
       </Switch>
     </div>
