@@ -1,0 +1,322 @@
+import random
+from datetime import datetime, timedelta
+import asyncio
+from typing import List, Dict, Optional, Tuple
+import json
+import redis
+from fastapi import FastAPI, Query, HTTPException, Depends
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseSettings, BaseModel
+import openai
+from openai import OpenAI
+from redis.asyncio import Redis
+import aiohttp
+import logging
+from functools import wraps
+import time
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+class Settings(BaseSettings):
+    openai_api_key: str
+    redis_url: str = "redis://localhost:6379"
+    rate_limit_requests: int = 50  # requests per minute
+    cache_expiry: int = 3600  # 1 hour in seconds
+
+    class Config:
+        env_file = ".env"
+
+class RateLimiter:
+    def __init__(self, redis_client: Redis, limit: int, window: int = 60):
+        self.redis = redis_client
+        self.limit = limit
+        self.window = window
+
+    async def check_rate_limit(self, key: str) -> Tuple[bool, int]:
+        async with self.redis.pipeline(transaction=True) as pipe:
+            current = await pipe.incr(key)
+            if current == 1:
+                await pipe.expire(key, self.window)
+            await pipe.execute()
+            
+            return current <= self.limit, self.limit - current
+
+class Cache:
+    def __init__(self, redis_client: Redis, expiry: int):
+        self.redis = redis_client
+        self.expiry = expiry
+
+    async def get(self, key: str) -> Optional[str]:
+        return await self.redis.get(key)
+
+    async def set(self, key: str, value: str):
+        await self.redis.setex(key, self.expiry, value)
+
+class PromptBuilder:
+    """Sophisticated prompt engineering for historical content."""
+    
+    SYSTEM_PROMPT = """You are an expert historian and engaging storyteller creating content for a microlearning platform. 
+    Your posts should be:
+    1. Historically accurate and well-researched
+    2. Engaging and thought-provoking
+    3. Concise and clear
+    4. Suitable for a general audience
+    5. Free from bias and presented objectively
+    
+    Format requirements:
+    - Hook: Must be attention-grabbing and under 100 characters
+    - Content: 2-3 sentences, rich in detail but accessible
+    - Takeaway: One insightful sentence connecting the historical event to broader themes
+    
+    Avoid:
+    - Oversimplification of complex events
+    - Controversial interpretations
+    - Modern political comparisons
+    - Unverified claims"""
+
+    @staticmethod
+    def build_prompt(category: str, region: str, time_period: str) -> str:
+        return f"""Generate an engaging historical post about {category} in {region} during {time_period}.
+
+        Requirements:
+        1. Focus on a specific event, person, or development that had significant impact
+        2. Include at least one precise date or time frame
+        3. Mention one surprising or lesser-known detail
+        4. Connect the topic to its broader historical significance
+        
+        Format the response as a JSON object with these exact keys:
+        - hook: an attention-grabbing question or statement
+        - content: 2-3 sentences explaining the historical event/figure/concept
+        - takeaway: a thought-provoking insight or fun fact
+        
+        Example format:
+        {{
+            "hook": "How did a single translation error almost start a war?",
+            "content": "In 1956, Soviet leader Nikita Khrushchev's phrase 'We will outlast you' was mistranslated as 'We will bury you,' causing significant diplomatic tension. This misunderstanding heightened Cold War anxieties and led to several weeks of increased military alertness.",
+            "takeaway": "Language and translation played a crucial role in shaping Cold War diplomacy and international relations."
+        }}
+        """
+
+class HistoricalPost(BaseModel):
+    hook: str
+    content: str
+    takeaway: str
+    category: str
+    region: str
+    time_period: str
+    is_premium: bool
+    created_at: datetime = datetime.now()
+
+    def to_dict(self) -> Dict:
+        return self.dict()
+
+    @classmethod
+    def from_dict(cls, data: Dict) -> 'HistoricalPost':
+        return cls(**data)
+
+class ContentValidator:
+    @staticmethod
+    def validate_post(post: Dict) -> bool:
+        """Validate the content meets quality standards."""
+        try:
+            # Check content length
+            if len(post['content']) < 50 or len(post['content']) > 500:
+                return False
+            
+            # Check hook length
+            if len(post['hook']) < 10 or len(post['hook']) > 100:
+                return False
+            
+            # Check takeaway presence
+            if not post['takeaway']:
+                return False
+            
+            # Additional validation rules can be added here
+            
+            return True
+        except KeyError:
+            return False
+
+class ContentGenerator:
+    def __init__(self, api_key: str, cache: Cache, rate_limiter: RateLimiter):
+        self.client = OpenAI(api_key=api_key)
+        self.cache = cache
+        self.rate_limiter = rate_limiter
+        self.prompt_builder = PromptBuilder()
+        self.validator = ContentValidator()
+        
+        self.categories = ["Ancient History", "Medieval History", "Modern History", 
+                          "Military History", "Cultural History", "Scientific History"]
+        self.regions = ["Europe", "Asia", "Africa", "Americas", "Middle East", "Global"]
+        self.time_periods = ["Ancient Times", "Middle Ages", "Renaissance", 
+                           "Industrial Era", "20th Century", "21st Century"]
+
+    def _generate_cache_key(self, category: str, region: str, time_period: str) -> str:
+        return f"history:post:{category}:{region}:{time_period}"
+
+    async def generate_post(self, category: Optional[str] = None, 
+                          region: Optional[str] = None, 
+                          time_period: Optional[str] = None,
+                          is_premium: bool = False,
+                          retries: int = 3) -> HistoricalPost:
+        """Generate a single historical post using OpenAI's API with caching and rate limiting."""
+        
+        category = category or random.choice(self.categories)
+        region = region or random.choice(self.regions)
+        time_period = time_period or random.choice(self.time_periods)
+        
+        cache_key = self._generate_cache_key(category, region, time_period)
+        
+        # Check cache first
+        cached_content = await self.cache.get(cache_key)
+        if cached_content:
+            content = json.loads(cached_content)
+            return HistoricalPost(**content)
+
+        # Check rate limit
+        can_proceed, remaining = await self.rate_limiter.check_rate_limit("openai:ratelimit")
+        if not can_proceed:
+            raise HTTPException(status_code=429, detail=f"Rate limit exceeded. Try again later. Remaining: {remaining}")
+
+        for attempt in range(retries):
+            try:
+                prompt = self.prompt_builder.build_prompt(category, region, time_period)
+                
+                response = await self.client.chat.completions.create(
+                    model="gpt-4",
+                    messages=[
+                        {"role": "system", "content": self.prompt_builder.SYSTEM_PROMPT},
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.7,
+                    max_tokens=300,
+                    response_format={ "type": "json_object" }
+                )
+                
+                content = json.loads(response.choices[0].message.content)
+                
+                # Validate content
+                if not self.validator.validate_post(content):
+                    if attempt == retries - 1:
+                        raise ValueError("Failed to generate valid content after multiple attempts")
+                    continue
+                
+                post = HistoricalPost(
+                    **content,
+                    category=category,
+                    region=region,
+                    time_period=time_period,
+                    is_premium=is_premium
+                )
+                
+                # Cache the valid content
+                await self.cache.set(cache_key, json.dumps(post.dict()))
+                
+                return post
+                
+            except Exception as e:
+                logger.error(f"Error generating content (attempt {attempt + 1}/{retries}): {str(e)}")
+                if attempt == retries - 1:
+                    raise HTTPException(
+                        status_code=500,
+                        detail=f"Failed to generate content after {retries} attempts"
+                    )
+                await asyncio.sleep(1)  # Brief pause before retry
+
+class ContentSeeder:
+    def __init__(self, generator: ContentGenerator):
+        self.generator = generator
+        self.premium_ratio = 0.3
+        
+    async def generate_feed(self, num_posts: int, is_premium_user: bool = False) -> List[Dict]:
+        """Generate a feed of posts with error handling and concurrent generation."""
+        premium_posts_count = int(num_posts * self.premium_ratio)
+        
+        async def generate_single_post(index: int):
+            try:
+                is_premium_post = index < premium_posts_count
+                post = await self.generator.generate_post(is_premium=is_premium_post)
+                post_dict = post.dict()
+                
+                if not is_premium_user and post_dict["is_premium"]:
+                    post_dict["content"] = "Sign up for Premium to unlock exclusive lessons and unlimited posts."
+                    post_dict["blurred"] = True
+                
+                return post_dict
+            except Exception as e:
+                logger.error(f"Error generating post {index}: {str(e)}")
+                return None
+
+        # Generate posts concurrently
+        tasks = [generate_single_post(i) for i in range(num_posts)]
+        posts = await asyncio.gather(*tasks)
+        
+        # Filter out failed posts and shuffle
+        feed = [post for post in posts if post is not None]
+        random.shuffle(feed)
+        
+        return feed
+
+# FastAPI app setup
+app = FastAPI(title="Historical Content Generator API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.on_event("startup")
+async def startup_event():
+    settings = Settings()
+    redis_client = Redis.from_url(settings.redis_url, encoding="utf-8", decode_responses=True)
+    
+    rate_limiter = RateLimiter(
+        redis_client=redis_client,
+        limit=settings.rate_limit_requests
+    )
+    
+    cache = Cache(
+        redis_client=redis_client,
+        expiry=settings.cache_expiry
+    )
+    
+    app.state.generator = ContentGenerator(
+        api_key=settings.openai_api_key,
+        cache=cache,
+        rate_limiter=rate_limiter
+    )
+    app.state.seeder = ContentSeeder(app.state.generator)
+
+@app.get("/feed")
+async def get_feed(
+    user_type: str = Query(..., enum=["free", "premium"]),
+    count: int = Query(default=10, ge=1, le=50),
+    category: Optional[str] = None,
+    region: Optional[str] = None,
+    time_period: Optional[str] = None
+):
+    """
+    Get a feed of historical posts.
+    
+    - **user_type**: Type of user (free/premium)
+    - **count**: Number of posts to generate
+    - **category**: Optional category filter
+    - **region**: Optional region filter
+    - **time_period**: Optional time period filter
+    """
+    try:
+        is_premium = user_type == "premium"
+        feed = await app.state.seeder.generate_feed(count, is_premium)
+        return {"feed": feed}
+    except Exception as e:
+        logger.error(f"Error generating feed: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
