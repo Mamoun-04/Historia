@@ -92,12 +92,12 @@ export function ContentCard({ content, isPremiumLocked = false }: ContentCardPro
         <Button 
           variant="ghost" 
           size="sm"
-          onClick={() => bookmark(!isBookmarked)}
+          onClick={() => bookmark()}
           disabled={isLoading.bookmark || !user}
         >
           <Bookmark className={cn(
             "h-4 w-4",
-            isBookmarked && "fill-foreground text-foreground"
+            isBookmarked && "fill-black stroke-black"
           )} />
         </Button>
       </CardFooter>
