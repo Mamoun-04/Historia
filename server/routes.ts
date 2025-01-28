@@ -212,14 +212,14 @@ export function registerRoutes(app: Express): Server {
 
       const [updatedUser] = await db
         .update(users)
-        .set({ 
+        .set({
           streak: newStreak,
           lastLogin: now,
         })
         .where(eq(users.id, req.user.id))
         .returning();
 
-      res.json({ 
+      res.json({
         user: updatedUser,
         streakLost,
         previousStreak
@@ -238,8 +238,8 @@ export function registerRoutes(app: Express): Server {
     try {
       const [content] = await db
         .update(historicalContent)
-        .set({ 
-          likes: historicalContent.likes + 1 
+        .set({
+          likes: historicalContent.likes + 1
         })
         .where(eq(historicalContent.id, Number(req.params.id)))
         .returning();
@@ -259,8 +259,8 @@ export function registerRoutes(app: Express): Server {
     try {
       const [content] = await db
         .update(historicalContent)
-        .set({ 
-          likes: historicalContent.likes - 1 
+        .set({
+          likes: historicalContent.likes - 1
         })
         .where(eq(historicalContent.id, Number(req.params.id)))
         .returning();
@@ -271,7 +271,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Bookmark content
+  // Bookmark/Unbookmark content
   app.post("/api/content/:id/bookmark", async (req, res) => {
     if (!req.user) {
       return res.status(401).send("Not authenticated");
@@ -291,9 +291,19 @@ export function registerRoutes(app: Express): Server {
         .limit(1);
 
       if (existingBookmark) {
-        return res.status(400).send("Content already bookmarked");
+        // If bookmark exists, remove it
+        await db
+          .delete(bookmarks)
+          .where(
+            and(
+              eq(bookmarks.userId, req.user.id),
+              eq(bookmarks.contentId, Number(req.params.id))
+            )
+          );
+        return res.json({ message: "Bookmark removed successfully" });
       }
 
+      // If bookmark doesn't exist, create it
       await db.insert(bookmarks).values({
         userId: req.user.id,
         contentId: Number(req.params.id),
@@ -305,29 +315,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Remove bookmark
-  app.delete("/api/content/:id/bookmark", async (req, res) => {
-    if (!req.user) {
-      return res.status(401).send("Not authenticated");
-    }
 
-    try {
-      await db
-        .delete(bookmarks)
-        .where(
-          and(
-            eq(bookmarks.userId, req.user.id),
-            eq(bookmarks.contentId, Number(req.params.id))
-          )
-        );
-
-      res.json({ message: "Bookmark removed successfully" });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  // Add comment
   app.post("/api/content/:id/comment", async (req, res) => {
     if (!req.user) {
       return res.status(401).send("Not authenticated");

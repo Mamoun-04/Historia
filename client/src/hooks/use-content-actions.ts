@@ -57,7 +57,7 @@ export function useContentActions(contentId: number) {
   const bookmarkMutation = useMutation({
     mutationFn: async (isBookmarking: boolean) => {
       const response = await fetch(`/api/content/${contentId}/bookmark`, {
-        method: isBookmarking ? "POST" : "DELETE",
+        method: "POST",  // Always use POST since our endpoint now handles both bookmark/unbookmark
         credentials: "include",
       });
 
