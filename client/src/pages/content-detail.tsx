@@ -18,8 +18,8 @@ export default function ContentDetail() {
   const { user } = useUser();
   const contentId = params ? parseInt(params.id) : 0;
 
-  const { data: content } = useQuery<SelectContent>({
-    queryKey: ["/api/content", contentId],
+  const { data: content, isLoading } = useQuery<SelectContent>({
+    queryKey: [`/api/content/${contentId}`],
   });
 
   const {
@@ -29,16 +29,29 @@ export default function ContentDetail() {
     like,
     bookmark,
     comment,
-    isLoading,
+    isLoading: actionLoading,
   } = useContentActions(contentId);
 
   const [commentText, setCommentText] = useState("");
 
-  if (!content) return null;
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!content) {
+    return (
+      <div className="container mx-auto py-6 px-4">
+        <p className="text-red-500">Content not found</p>
+      </div>
+    );
+  }
 
   const handleComment = async () => {
     if (!commentText.trim()) return;
-
     await comment(commentText);
     setCommentText("");
   };
@@ -59,7 +72,7 @@ export default function ContentDetail() {
                 variant="outline" 
                 size="icon"
                 onClick={() => like(!content.likes)}
-                disabled={isLoading.like}
+                disabled={actionLoading.like}
               >
                 <ThumbsUp className={cn("h-4 w-4", content.likes && "fill-current")} />
               </Button>
@@ -67,11 +80,11 @@ export default function ContentDetail() {
                 variant="outline" 
                 size="icon"
                 onClick={() => bookmark()}
-                disabled={isLoading.bookmark}
+                disabled={actionLoading.bookmark}
               >
                 <Bookmark className={cn(
                   "h-4 w-4",
-                  isBookmarked && "fill-black stroke-black"
+                  isBookmarked && "fill-current"
                 )} />
               </Button>
             </div>
@@ -89,21 +102,21 @@ export default function ContentDetail() {
         <div className="space-y-6">
           <section>
             <h2 className="text-xl font-semibold mb-2">Hook</h2>
-            <p>{content.hook}</p>
+            <p className="text-gray-700">{content.hook}</p>
           </section>
 
           <Separator />
 
           <section>
             <h2 className="text-xl font-semibold mb-2">Content</h2>
-            <p className="whitespace-pre-wrap">{content.content}</p>
+            <p className="text-gray-700 whitespace-pre-wrap">{content.content}</p>
           </section>
 
           <Separator />
 
           <section>
             <h2 className="text-xl font-semibold mb-2">Key Takeaway</h2>
-            <p>{content.takeaway}</p>
+            <p className="text-gray-700">{content.takeaway}</p>
           </section>
         </div>
 
@@ -112,7 +125,7 @@ export default function ContentDetail() {
             <h3 className="text-lg font-semibold">Comments</h3>
             <p className="text-sm text-muted-foreground">
               <Clock className="h-4 w-4 inline mr-1" />
-              {content?.createdAt && format(parseISO(content.createdAt.toString()), "PPP")}
+              {content.createdAt && format(parseISO(content.createdAt.toString()), "PPP")}
             </p>
           </div>
 
@@ -127,9 +140,9 @@ export default function ContentDetail() {
                 />
                 <Button
                   onClick={handleComment}
-                  disabled={isLoading.comment || !commentText.trim()}
+                  disabled={actionLoading.comment || !commentText.trim()}
                 >
-                  {isLoading.comment ? (
+                  {actionLoading.comment ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <>
@@ -147,7 +160,7 @@ export default function ContentDetail() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {comments.map((comment) => (
+                    {comments?.map((comment) => (
                       <div key={comment.id} className="p-4 rounded-lg bg-muted">
                         <div className="flex justify-between items-start mb-2">
                           <p className="font-medium">{comment.username}</p>
@@ -158,7 +171,7 @@ export default function ContentDetail() {
                         <p className="text-sm">{comment.text}</p>
                       </div>
                     ))}
-                    {comments.length === 0 && (
+                    {(!comments || comments.length === 0) && (
                       <p className="text-center text-muted-foreground py-4">
                         No comments yet. Be the first to comment!
                       </p>
