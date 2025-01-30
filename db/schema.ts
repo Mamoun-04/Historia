@@ -24,6 +24,8 @@ export const historicalContent = pgTable("historical_content", {
   takeaway: text("takeaway").notNull(),
   imageUrl: text("image_url"),
   likes: integer("likes").default(0),
+  roadmap_id: integer("roadmap_id"), // Kept to avoid data loss
+  section_id: integer("section_id"), // Kept to avoid data loss
   createdAt: timestamp("created_at").defaultNow(),
 });
 
