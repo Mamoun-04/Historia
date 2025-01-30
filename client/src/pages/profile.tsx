@@ -74,7 +74,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="container mx-auto py-6 px-4">
+    <div className="container mx-auto py-6 px-4 mt-16">
       <Card className="mb-6">
         <CardContent className="pt-6">
           <div className="flex items-center gap-4">
