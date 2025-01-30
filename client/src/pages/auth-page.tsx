@@ -3,6 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@/hooks/use-user";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { useLocation } from "wouter";
 import {
   Form,
   FormControl,
@@ -19,6 +20,7 @@ import type { InsertUser } from "@db/schema";
 export default function AuthPage() {
   const { login, register } = useUser();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
   const form = useForm<InsertUser>({
     resolver: zodResolver(insertUserSchema),
@@ -47,6 +49,10 @@ export default function AuthPage() {
         title: "Success",
         description: mode === "login" ? "Logged in successfully" : "Registered successfully",
       });
+
+      // Redirect to the feed page after successful login/registration
+      setLocation("/");
+
     } catch (error: any) {
       toast({
         variant: "destructive",
