@@ -50,8 +50,11 @@ export default function AuthPage() {
         description: mode === "login" ? "Logged in successfully" : "Registered successfully",
       });
 
-      // Redirect to the feed page after successful login/registration
-      setLocation("/");
+      // Ensure we redirect after the state has been updated
+      setTimeout(() => {
+        setLocation("/");
+        window.location.reload();
+      }, 100);
 
     } catch (error: any) {
       toast({
