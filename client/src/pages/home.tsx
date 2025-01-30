@@ -10,6 +10,13 @@ export default function Home() {
     queryKey: ["/api/content"],
   });
 
+  const scrollToContent = () => {
+    const contentSection = document.getElementById('content-section');
+    if (contentSection) {
+      contentSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -33,21 +40,25 @@ export default function Home() {
         <div className="parallax-container absolute inset-0">
           <div className="parallax-content bg-gradient-to-b from-background to-muted h-[120%] w-full" />
         </div>
-        <div className="relative z-10 text-center max-w-4xl mx-auto px-4">
+        <div className="relative z-10 text-center max-w-4xl mx-auto px-4 flex flex-col items-center">
           <h1 className="text-6xl md:text-7xl lg:text-8xl font-display mb-6 animate-fade-in">
             Journey Through Time
           </h1>
-          <p className="text-xl md:text-2xl text-muted-foreground mb-8 animate-fade-in [animation-delay:200ms]">
+          <p className="text-xl md:text-2xl text-muted-foreground mb-16 animate-fade-in [animation-delay:200ms]">
             Discover fascinating historical moments through bite-sized, interactive learning experiences.
           </p>
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
-            <ChevronDown className="h-8 w-8 text-muted-foreground" />
-          </div>
+          <button 
+            onClick={scrollToContent}
+            className="animate-bounce hover:text-primary transition-colors"
+            aria-label="Scroll to content"
+          >
+            <ChevronDown className="h-8 w-8" />
+          </button>
         </div>
       </section>
 
       {/* Content Grid */}
-      <section className="container mx-auto py-24">
+      <section id="content-section" className="container mx-auto py-24">
         <h2 className="text-4xl font-display mb-12 text-center">Historical Posts</h2>
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
           {content?.map((item, index) => (
