@@ -111,7 +111,7 @@ export default function ProfilePage() {
         </TabsList>
 
         <TabsContent value="bookmarks" className="mt-6">
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 content-grid">
             {bookmarks?.map((bookmark) => (
               <ContentCard 
                 key={bookmark.content.id} 
@@ -119,12 +119,25 @@ export default function ProfilePage() {
               />
             ))}
             {(!bookmarks || bookmarks.length === 0) && (
-              <p className="text-muted-foreground col-span-full text-center py-8">
-                No bookmarks yet. Start saving interesting historical content!
-              </p>
-            )}
-          </div>
-        </TabsContent>
+                <>
+                  <p className="text-muted-foreground col-span-full text-center py-8">
+                    No bookmarks yet. Start saving interesting historical content!
+                  </p>
+                  <Button 
+                    className="mx-auto mt-4 block"
+                    onClick={() => {
+                      document.querySelector('.content-grid')?.scrollIntoView({ 
+                        behavior: 'smooth',
+                        block: 'start'
+                      });
+                    }}
+                  >
+                    View Posts
+                  </Button>
+                </>
+              )}
+            </div>
+          </TabsContent>
 
         <TabsContent value="achievements" className="mt-6">
           <ScrollArea className="h-[500px] rounded-md border p-4">
